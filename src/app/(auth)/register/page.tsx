@@ -9,48 +9,55 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, Loader2, Mail, KeyRound, UserPlus } from 'lucide-react';
+import { UserPlus, Loader2, Mail, KeyRound, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const loginFormSchema = z.object({
+const registerFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(1, { message: "Password cannot be empty." }), // Min 1 for prototype, real app: 6-8
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  confirmPassword: z.string().min(6, { message: "Password must be at least 6 characters." }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"], // Path to show error under
 });
 
-type LoginFormValues = z.infer<typeof loginFormSchema>;
+type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
-export default function LoginPage() {
-  const { login: authLogin } = useAuth(); // Renamed to avoid conflict
+export default function RegisterPage() {
+  const { register: authRegister } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginFormSchema),
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<RegisterFormValues> = async (data) => {
     setIsLoading(true);
-    const result = await authLogin(data.email, data.password);
+    const result = await authRegister(data.email, data.password);
     
     if (result.success) {
       toast({
-        title: "Login Successful",
-        description: "Welcome back!",
+        title: "Registration Successful",
+        description: "You can now log in with your new account.",
       });
-      // Redirect is handled by AuthContext
+      router.push('/login');
     } else {
       toast({
         variant: "destructive",
-        title: "Login Failed",
+        title: "Registration Failed",
         description: result.message || "An unexpected error occurred.",
       });
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (
@@ -58,10 +65,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center">
-            <LogIn className="mr-2 h-7 w-7 text-primary" /> Login to HealthFlow AI
+            <UserPlus className="mr-2 h-7 w-7 text-primary" /> Create Account
           </CardTitle>
           <CardDescription>
-            Access your health dashboard and appointment history.
+            Join HealthFlow AI to manage your health insights.
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -93,17 +100,30 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-muted-foreground" />Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
             <CardFooter className="flex flex-col items-center">
               <Button type="submit" disabled={isLoading} className="w-full" size="lg">
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
-                Login
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                Register
               </Button>
-              <p className="mt-6 text-sm text-muted-foreground">
-                Don't have an account?{' '}
+               <p className="mt-6 text-sm text-muted-foreground">
+                Already have an account?{' '}
                 <Button variant="link" asChild className="p-0 h-auto">
-                  <Link href="/register">
-                     Register here <UserPlus className="ml-1 h-4 w-4" />
+                  <Link href="/login">
+                    Login here <LogIn className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               </p>

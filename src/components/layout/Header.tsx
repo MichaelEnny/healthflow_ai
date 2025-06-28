@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { HeartPulse, LogIn, LogOut, LayoutDashboard, Activity, Home } from 'lucide-react';
+import { HeartPulse, LogIn, LogOut, LayoutDashboard, Activity, Home, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -22,13 +22,13 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2 mr-6"> {/* Added mr-6 for spacing */}
           <HeartPulse className="h-6 w-6 text-primary" />
           <span className="font-bold text-lg">HealthFlow AI</span>
         </Link>
 
         {/* Navigation Menu - Centered */}
-        <nav className="mx-auto flex items-center space-x-6 text-sm font-medium">
+        <nav className="flex-grow flex justify-center items-center space-x-6 text-sm font-medium">
           {navItems.map((item) => {
             if (item.requiresAuth && !isAuthenticated && !isLoading) return null;
             if (item.requiresAuth && isLoading && !isAuthenticated) return null; 
@@ -50,20 +50,29 @@ export default function Header() {
         </nav>
 
         {/* Auth Buttons */}
-        <div className="flex items-center justify-end space-x-4">
+        <div className="flex items-center justify-end space-x-2 min-w-[200px]"> {/* Added min-w for stability */}
           {!isLoading && (
             isAuthenticated ? (
               <Button variant="outline" size="sm" onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" /> Logout
               </Button>
             ) : (
-               pathname !== '/login' && ( // Hide login button on login page
-                <Button asChild variant="default" size="sm">
-                  <Link href="/login">
-                    <LogIn className="mr-2 h-4 w-4" /> Login
-                  </Link>
-                </Button>
-              )
+              <>
+                {pathname !== '/login' && (
+                  <Button asChild variant="default" size="sm">
+                    <Link href="/login">
+                      <LogIn className="mr-2 h-4 w-4" /> Login
+                    </Link>
+                  </Button>
+                )}
+                {pathname !== '/register' && (
+                   <Button asChild variant="outline" size="sm">
+                    <Link href="/register">
+                      <UserPlus className="mr-2 h-4 w-4" /> Register
+                    </Link>
+                  </Button>
+                )}
+              </>
             )
           )}
         </div>

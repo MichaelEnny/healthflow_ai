@@ -2,14 +2,28 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import type { HealthRecord, Appointment } from '@/types';
-import { CalendarDays, History, ListChecks, ShieldAlert, FlaskConical, Edit3, Clock } from 'lucide-react';
+import { CalendarDays, History, ListChecks, ShieldAlert, FlaskConical, Edit3, Clock, Trash2, AlertTriangle, BrainCircuit, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { summarizeHealthHistory } from '@/ai/flows/summarize-health-history';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Mock data for localStorage keys
 const HEALTH_RECORDS_KEY = 'healthflow_health_records';
@@ -19,9 +33,17 @@ export default function DashboardPage() {
   const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const { deleteAccount: authDeleteAccount, currentUser } = useAuth();
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // State for AI Summary
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsClient(true); // Ensures localStorage is accessed only on client
+    setIsClient(true); 
     if (typeof window !== 'undefined') {
       const storedRecords = localStorage.getItem(HEALTH_RECORDS_KEY);
       if (storedRecords) {
@@ -32,22 +54,98 @@ export default function DashboardPage() {
         setAppointments(JSON.parse(storedAppointments));
       }
     }
-  }, []);
+  }, [currentUser]);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    const result = await authDeleteAccount();
+    if (result.success) {
+      toast({
+        title: "Account Deleted",
+        description: "Your account and associated data have been removed from this prototype.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Deletion Failed",
+        description: result.message || "Could not delete your account. Please try again.",
+      });
+    }
+    setIsDeleting(false);
+  };
+
+  const handleGenerateSummary = async () => {
+    if (healthRecords.length === 0) {
+      setSummaryError("You have no health records to summarize. Start by analyzing your symptoms.");
+      return;
+    }
+    setIsSummarizing(true);
+    setSummary(null);
+    setSummaryError(null);
+    try {
+      const historyString = JSON.stringify(healthRecords);
+      const result = await summarizeHealthHistory({ healthHistory: historyString });
+      setSummary(result.summary);
+    } catch (error) {
+      console.error("Error generating health summary:", error);
+      setSummaryError("Failed to generate AI summary. Please try again later.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
 
   if (!isClient) {
-    return <div className="flex justify-center items-center h-64"><p>Loading dashboard data...</p></div>; // Or a Skeleton loader
+    return <div className="flex justify-center items-center h-64"><p>Loading dashboard data...</p></div>;
   }
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Your Health Dashboard</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Your Health Dashboard</h1>
+            {currentUser && <p className="text-muted-foreground">Welcome, {currentUser.email}</p>}
+        </div>
         <Button asChild>
           <Link href="/analyze">
             <Edit3 className="mr-2 h-4 w-4" /> New Symptom Analysis
           </Link>
         </Button>
       </div>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+            <CardTitle className="text-2xl flex items-center">
+                <BrainCircuit className="mr-2 h-6 w-6 text-primary" /> AI Health Summary
+            </CardTitle>
+            <CardDescription>Get a concise, AI-powered summary of your entire health history to spot trends.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {isSummarizing ? (
+                <div className="flex items-center justify-center min-h-[100px] flex-col">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                    <p className="text-muted-foreground">Analyzing your history...</p>
+                </div>
+            ) : summaryError ? (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{summaryError}</AlertDescription>
+                </Alert>
+            ) : summary ? (
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap p-4 bg-secondary/30 rounded-md">{summary}</div>
+            ) : (
+                <div className="flex flex-col items-center justify-center text-center p-4 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground mb-4">Click the button to generate an intelligent summary of your health records.</p>
+                    <Button onClick={handleGenerateSummary} disabled={healthRecords.length === 0}>
+                        <BrainCircuit className="mr-2 h-4 w-4" /> Generate AI Summary
+                    </Button>
+                     {healthRecords.length === 0 && <p className="text-xs text-muted-foreground mt-2">You have no records to summarize yet.</p>}
+                </div>
+            )}
+        </CardContent>
+      </Card>
+
 
       <div className="grid gap-8 md:grid-cols-2">
         <Card className="shadow-lg">
@@ -64,7 +162,7 @@ export default function DashboardPage() {
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-6">
                   {healthRecords.map((record) => (
-                    <Card key={record.id} className="bg-secondary/30">
+                    <Card key={record.id} className="bg-secondary/30 shadow-md hover:shadow-lg transition-shadow">
                       <CardHeader>
                         <CardTitle className="text-lg">Analysis on {record.date}</CardTitle>
                       </CardHeader>
@@ -118,7 +216,7 @@ export default function DashboardPage() {
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-4">
                   {appointments.map((apt) => (
-                    <div key={apt.id} className="p-4 border rounded-md bg-secondary/30">
+                    <div key={apt.id} className="p-4 border rounded-md bg-secondary/30 shadow-sm hover:shadow-md transition-shadow">
                       <p className="font-semibold text-md">
                         {format(new Date(apt.date), "MMMM d, yyyy")} at {apt.time}
                       </p>
@@ -132,8 +230,45 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-lg mt-8">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center">Account Settings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground mb-4">Manage your account preferences and data.</p>
+           <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeleting}>
+                <Trash2 className="mr-2 h-4 w-4" /> {isDeleting ? "Deleting..." : "Delete My Account"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center">
+                  <AlertTriangle className="mr-2 h-6 w-6 text-destructive" /> Are you absolutely sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account data from this prototype's local storage.
+                  In a real application, this would involve permanent data deletion according to privacy regulations.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                  {isDeleting ? "Deleting..." : "Yes, delete my account"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+        <CardFooter>
+          <p className="text-xs text-muted-foreground">
+            Account deletion in this prototype removes your data from the browser's local storage.
+            A production system would have robust, compliant data deletion processes.
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
-
-    

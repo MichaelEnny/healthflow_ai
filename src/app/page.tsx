@@ -1,4 +1,5 @@
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,31 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Sparkles, BotMessageSquare, DatabaseZap, CalendarPlus, FileText, ChevronRight, Users, MessageSquare, Activity, ShieldCheck, TrendingUp, BrainCircuit } from 'lucide-react';
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+
+export const metadata: Metadata = {
+  title: 'HealthFlow AI: AI Symptom Analysis & Health Tracking',
+  description: 'Discover HealthFlow AI: Get instant AI-driven insights on your symptoms, track health records, and schedule medical appointments. Your personal health companion.',
+  openGraph: {
+    title: 'HealthFlow AI: AI Symptom Analysis & Health Tracking',
+    description: 'Instant AI-driven symptom insights, health record management, and seamless appointment scheduling.',
+    url: '/',
+    images: [
+      {
+        url: 'https://placehold.co/1200x600.png', // Using the hero image for OG
+        width: 1200,
+        height: 600,
+        alt: 'HealthFlow AI Dashboard Mockup',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HealthFlow AI: AI Symptom Analysis & Health Tracking',
+    description: 'Instant AI-driven symptom insights, health record management, and seamless appointment scheduling.',
+    images: ['https://placehold.co/1200x600.png'], // Using the hero image for Twitter card
+  },
+};
+
 
 const featureCards = [
   {
@@ -105,11 +131,11 @@ export default function LandingPage() {
             <div className="mt-16">
               <Image
                 src="https://placehold.co/1200x600.png"
-                alt="HealthFlow AI Dashboard Mockup"
+                alt="HealthFlow AI Dashboard showing symptom analysis and health tracking features"
                 width={1200}
                 height={600}
                 className="rounded-xl shadow-2xl mx-auto"
-                data-ai-hint="health technology"
+                data-ai-hint="health dashboard"
                 priority
               />
             </div>
@@ -153,7 +179,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8 items-start">
-              {howItWorksSteps.map((step, index) => (
+              {howItWorksSteps.map((step) => (
                 <div key={step.id} className="flex flex-col items-center text-center p-6 rounded-lg bg-card shadow-md hover:shadow-lg transition-shadow">
                   <div className="bg-accent/10 text-accent p-4 rounded-full w-fit mb-6">
                     <step.icon className="h-10 w-10" />
@@ -184,7 +210,7 @@ export default function LandingPage() {
                   </CardContent>
                   <CardHeader className="border-t pt-4">
                     <div className="flex items-center">
-                      <Image src={testimonial.avatar} alt={testimonial.name} width={40} height={40} className="rounded-full mr-4" data-ai-hint={testimonial.dataAiHint} />
+                      <Image src={testimonial.avatar} alt={`Avatar of ${testimonial.name}`} width={40} height={40} className="rounded-full mr-4" data-ai-hint={testimonial.dataAiHint} />
                       <div>
                         <CardTitle className="text-md">{testimonial.name}</CardTitle>
                         <CardDescription>{testimonial.role}</CardDescription>
@@ -219,5 +245,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    

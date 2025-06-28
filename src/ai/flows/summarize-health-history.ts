@@ -13,12 +13,12 @@ import {z} from 'genkit';
 const SummarizeHealthHistoryInputSchema = z.object({
   healthHistory: z
     .string()
-    .describe('A string containing the user health history.'),
+    .describe("A JSON string representing an array of the user's health records."),
 });
 export type SummarizeHealthHistoryInput = z.infer<typeof SummarizeHealthHistoryInputSchema>;
 
 const SummarizeHealthHistoryOutputSchema = z.object({
-  summary: z.string().describe('A summary of the user health history.'),
+  summary: z.string().describe('A concise, professional summary of the user health history, highlighting trends and key issues.'),
 });
 export type SummarizeHealthHistoryOutput = z.infer<typeof SummarizeHealthHistoryOutputSchema>;
 
@@ -32,10 +32,15 @@ const prompt = ai.definePrompt({
   name: 'summarizeHealthHistoryPrompt',
   input: {schema: SummarizeHealthHistoryInputSchema},
   output: {schema: SummarizeHealthHistoryOutputSchema},
-  prompt: `You are an AI assistant summarizing a user's health history.
-Summarize the following health history:
+  prompt: `You are an expert medical AI assistant. Your task is to analyze a patient's health history, provided as a JSON array of past records. Provide a concise, professional summary that highlights:
+1. Key recurring symptoms or conditions.
+2. Any noticeable trends over time (e.g., increasing frequency of headaches).
+3. A high-level overview of the patient's reported health journey.
 
-{{healthHistory}}`,
+Format the output as a clean, readable summary. Do not just list the records. Synthesize the information into actionable insights.
+
+Health History Data:
+{{{healthHistory}}}`,
 });
 
 const summarizeHealthHistoryFlow = ai.defineFlow(

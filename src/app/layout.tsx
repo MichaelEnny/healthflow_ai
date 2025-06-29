@@ -1,39 +1,34 @@
 
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/Providers';
 import { Toaster } from '@/components/ui/toaster';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const inter = Inter({
+  variable: '--font-sans',
   subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'), // Replace with your actual domain in Vercel/Netlify
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'),
   title: {
-    default: 'HealthFlow AI - Your Intelligent Health Companion',
-    template: '%s | HealthFlow AI',
+    default: 'MediTrack - Your Intelligent Health Companion',
+    template: '%s | MediTrack',
   },
-  description: 'Get AI-powered symptom analysis, track your health journey, and schedule appointments seamlessly with HealthFlow AI.',
+  description: 'Get AI-powered symptom analysis, track your health journey, and schedule appointments seamlessly with MediTrack.',
   keywords: ['health AI', 'symptom checker', 'medical assistant', 'AI diagnosis', 'health tracking', 'appointment scheduling'],
   openGraph: {
-    title: 'HealthFlow AI - Your Intelligent Health Companion',
+    title: 'MediTrack - Your Intelligent Health Companion',
     description: 'AI-powered symptom analysis, health tracking, and appointment scheduling.',
-    url: '/', // Or specific URL for the page
-    siteName: 'HealthFlow AI',
+    url: '/',
+    siteName: 'MediTrack',
     images: [
       {
-        url: 'https://placehold.co/1200x630.png?text=HealthFlow+AI', // Replace with your actual OG image
+        url: 'https://placehold.co/1200x630.png?text=MediTrack', 
         width: 1200,
         height: 630,
-        alt: 'HealthFlow AI',
+        alt: 'MediTrack',
       },
     ],
     locale: 'en_US',
@@ -41,11 +36,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HealthFlow AI - Your Intelligent Health Companion',
+    title: 'MediTrack - Your Intelligent Health Companion',
     description: 'AI-powered symptom analysis, health tracking, and appointment scheduling.',
-    // site: '@yourtwitterhandle', // Optional: your Twitter handle
-    // creator: '@creatorhandle', // Optional: content creator's Twitter handle
-    images: ['https://placehold.co/1200x630.png?text=HealthFlow+AI'], // Replace with your actual Twitter card image
+    images: ['https://placehold.co/1200x630.png?text=MediTrack'],
   },
   robots: {
     index: true,
@@ -58,10 +51,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  // icons: { // Add if you have a favicon
-  //   icon: '/favicon.ico',
-  //   apple: '/apple-touch-icon.png',
-  // },
 };
 
 export default function RootLayout({
@@ -70,8 +59,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className={`${inter.variable}`}>
+      <body className={`antialiased font-sans`}>
         <Providers>
           {children}
           <Toaster />

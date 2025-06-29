@@ -2,80 +2,76 @@
 "use client";
 
 import Link from 'next/link';
-import { HeartPulse, LogIn, LogOut, LayoutDashboard, Activity, Home, UserPlus } from 'lucide-react';
+import { LogOut, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { useSidebar } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 export default function Header() {
-  const { isAuthenticated, logout, isLoading } = useAuth();
-  const pathname = usePathname();
-
-  const navItems = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/analyze', label: 'Symptom Checker', icon: Activity },
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
-  ];
+  const { isAuthenticated, logout, currentUser } = useAuth();
+  const { toggleSidebar } = useSidebar();
+  
+  const userInitial = currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : '?';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 mr-6"> {/* Added mr-6 for spacing */}
-          <HeartPulse className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">HealthFlow AI</span>
-        </Link>
+        <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={toggleSidebar}
+        >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle Sidebar</span>
+        </Button>
 
-        {/* Navigation Menu - Centered */}
-        <nav className="flex-grow flex justify-center items-center space-x-6 text-sm font-medium">
-          {navItems.map((item) => {
-            if (item.requiresAuth && !isAuthenticated && !isLoading) return null;
-            if (item.requiresAuth && isLoading && !isAuthenticated) return null; 
+        <div className="flex-1" />
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "transition-colors hover:text-primary",
-                  pathname === item.href ? "text-primary" : "text-foreground/60"
-                )}
-              >
-                <item.icon className="inline-block h-4 w-4 mr-1 mb-0.5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Auth Buttons */}
-        <div className="flex items-center justify-end space-x-2 min-w-[200px]"> {/* Added min-w for stability */}
-          {!isLoading && (
-            isAuthenticated ? (
-              <Button variant="outline" size="sm" onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" /> Logout
+        {isAuthenticated && (
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={`https://placehold.co/100x100.png`} alt={currentUser?.email || "User"} data-ai-hint="person portrait" />
+                  <AvatarFallback>{userInitial}</AvatarFallback>
+                </Avatar>
               </Button>
-            ) : (
-              <>
-                {pathname !== '/login' && (
-                  <Button asChild variant="default" size="sm">
-                    <Link href="/login">
-                      <LogIn className="mr-2 h-4 w-4" /> Login
-                    </Link>
-                  </Button>
-                )}
-                {pathname !== '/register' && (
-                   <Button asChild variant="outline" size="sm">
-                    <Link href="/register">
-                      <UserPlus className="mr-2 h-4 w-4" /> Register
-                    </Link>
-                  </Button>
-                )}
-              </>
-            )
-          )}
-        </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">My Account</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {currentUser?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   );
